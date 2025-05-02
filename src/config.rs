@@ -3,67 +3,86 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct Config {
-    pub mods: Vec<Mods>,
-    pub mode: Mode,
-    pub mods_path: Option<String>,
-    pub work_dir: Option<String>,
-    pub steamcmd_path: Option<String>,
+pub struct LocalConfig {
+    pub steamcmd_path: String,
+    pub servers: Vec<ServersConfig>,
+    pub workshop_path: String,
+    pub is_initialized: bool,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Mods {
+pub struct ServersConfig {
     pub name: String,
+    pub connection_type: ServerConnectionType,
+    pub server_path: String,
+    pub hostname: Option<String>,
+    pub port: Option<u16>,
+    pub username: Option<String>,
+    pub password: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum ServerConnectionType {
+    Local,
+    Ftp,
+    Sftp,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ModsLinkConfig {
+    pub server_name: String,
+    pub last_updated: String,
+    pub mods: Vec<ModsConfig>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ModsConfig {
+    pub name: String,
+    pub folder_name: String,
     pub mod_id: String,
 }
 
-#[derive(Serialize, Deserialize)]
-pub enum Mode {
-    Local,
-    Steam,
-}
-
-impl Default for Mode {
+impl Default for LocalConfig {
     fn default() -> Self {
-        Mode::Local
-    }
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Config {
-            mods: Vec::new(),
-            mode: Mode::default(),
-            mods_path: None,
-            work_dir: None,
-            steamcmd_path: None,
+        Self {
+            steamcmd_path: String::new(),
+            servers: Vec::new(),
+            workshop_path: String::new(),
+            is_initialized: false,
         }
     }
 }
 
-impl Default for Mods {
-    fn default() -> Self {
-        Mods {
-            name: String::new(),
-            mod_id: String::new(),
+impl LocalConfig {
+    pub fn load_config(&self) -> Result<Self, Box<dyn std::error::Error>> {
+        let config_path = self.get_config_path()?;
+        if self.is_initialized {
+            let config = std::fs::read_to_string(config_path)?;
+            let config: Self = toml::from_str(&config)?;
+            Ok(config)
+        } else {
+            Ok(Self::default())
         }
-    }
-}
-
-impl Config {
-    pub fn load_config(&self) -> Result<Self, std::io::Error> {
-        todo!("Implement load config functionality")
     }
 
     fn get_config_path(&self) -> Result<PathBuf, std::io::Error> {
-        let current_dir = std::env::current_dir()?;
-        let mut config_path = current_dir;
-        config_path.push("modslink.toml");
-        if config_path.exists() {
-            Ok(config_path)
-        } else {
-            std::fs::create_dir_all(&config_path)?;
-            Ok(config_path)
+        let config_dir = dirs::config_dir().expect("Failed to get config directory");
+        let config_path = config_dir
+            .join("karnes-development")
+            .join("modslink")
+            .join("config.toml");
+        Ok(config_path)
+    }
+
+    pub fn save_config(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let config_path = self.get_config_path()?;
+
+        if let Some(parent) = config_path.parent() {
+            std::fs::create_dir_all(parent)?;
         }
+
+        let config = toml::to_string(&self)?;
+        std::fs::write(config_path, config)?;
+        Ok(())
     }
 }

@@ -4,6 +4,7 @@ mod cli;
 mod commands;
 mod config;
 use cli::{Cli, ModCommands};
+use commands::InitialCommand;
 
 fn main() {
     let args = Cli::parse();
@@ -21,7 +22,7 @@ fn main() {
             println!("Updating a module...");
         }
         ModCommands::Init => {
-            println!("Initializing a new project...");
+            InitialCommand::init().unwrap();
         }
         ModCommands::Debug => {
             println!("Debugging...");
