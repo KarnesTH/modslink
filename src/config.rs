@@ -54,18 +54,17 @@ impl Default for LocalConfig {
 }
 
 impl LocalConfig {
-    pub fn load_config(&self) -> Result<Self, Box<dyn std::error::Error>> {
-        let config_path = self.get_config_path()?;
-        if self.is_initialized {
+    pub fn load_config() -> Result<Self, Box<dyn std::error::Error>> {
+        let config_path = Self::get_config_path()?;
+        if config_path.exists() {
             let config = std::fs::read_to_string(config_path)?;
-            let config: Self = toml::from_str(&config)?;
-            Ok(config)
+            toml::from_str(&config).map_err(|e| e.into())
         } else {
             Ok(Self::default())
         }
     }
 
-    fn get_config_path(&self) -> Result<PathBuf, std::io::Error> {
+    fn get_config_path() -> Result<PathBuf, std::io::Error> {
         let config_dir = dirs::config_dir().expect("Failed to get config directory");
         let config_path = config_dir
             .join("karnes-development")
@@ -75,7 +74,7 @@ impl LocalConfig {
     }
 
     pub fn save_config(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let config_path = self.get_config_path()?;
+        let config_path = Self::get_config_path()?;
 
         if let Some(parent) = config_path.parent() {
             std::fs::create_dir_all(parent)?;

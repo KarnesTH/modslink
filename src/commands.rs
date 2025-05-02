@@ -1,25 +1,40 @@
-use inquire::Confirm;
+use inquire::{Confirm, Text};
+
+use crate::config::LocalConfig;
 
 pub struct InitialCommand {}
 
 impl InitialCommand {
-    pub fn init() -> Result<(), Box<dyn std::error::Error>> {
-        println!("Welcome to the modslink CLI tool!");
-        println!(
-            "In the next steps, you will enter several informations for your modslink configuration."
-        );
-        let start_ans = Confirm::new("Do you want to start the configuration process?").prompt();
+    pub fn init(
+        name: Option<String>,
+        connection_type: Option<String>,
+        steamcmd_path: Option<String>,
+        workshop_path: Option<String>,
+        server_path: Option<String>,
+        hostname: Option<String>,
+        username: Option<String>,
+        password: Option<String>,
+        port: Option<u16>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let config = LocalConfig::load_config()?;
 
-        match start_ans {
-            Ok(true) => {
-                println!("Starting configuration process...");
-                // TODO: Implement configuration process
+        if config.is_initialized {
+            println!("Configure your server");
+            if let Some(name) = name {
+                print!("Name: {}", name);
+            } else {
+                Text::new("Enter a name for your server")
+                    .with_help_message("The name of your Server e.g. DayZFrostlineServer")
+                    .prompt()?;
             }
-            Ok(false) => {
-                println!("Configuration process aborted.");
-            }
-            Err(err) => {
-                println!("Error: {}", err);
+        } else {
+            println!("Initialize config");
+            if let Some(name) = name {
+                print!("Name: {}", name);
+            } else {
+                Text::new("Enter a name for your server")
+                    .with_help_message("The name of your Server e.g. DayZFrostlineServer")
+                    .prompt()?;
             }
         }
 

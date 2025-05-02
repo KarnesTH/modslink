@@ -21,8 +21,29 @@ fn main() {
         ModCommands::Update => {
             println!("Updating a module...");
         }
-        ModCommands::Init => {
-            InitialCommand::init().unwrap();
+        ModCommands::Init {
+            name,
+            connection_type,
+            steamcmd_path,
+            workshop_path,
+            server_path,
+            hostname,
+            username,
+            password,
+            port,
+        } => {
+            InitialCommand::init(
+                name,
+                connection_type,
+                steamcmd_path,
+                workshop_path,
+                server_path,
+                hostname,
+                username,
+                password,
+                port,
+            )
+            .unwrap();
         }
         ModCommands::Debug => {
             println!("Debugging...");
